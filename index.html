@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рецепти з того, що є</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .main-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align content to the top */
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn {
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .recipe-title {
+            color: #1e40af;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .recipe-card {
+            border-left: 4px solid #3b82f6;
+        }
+        .recipe-card h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e40af; /* СИНІЙ КОЛІР ДЛЯ НАЗВИ РЕЦЕПТУ */
+            margin-bottom: 0.5rem;
+        }
+        .recipe-card ul, .recipe-card ol {
+            margin-left: 1.5rem;
+        }
+        /* СТИЛЬ ДЛЯ ПОПЕРЕДЖЕННЯ/ПОЯСНЕННЯ */
+        .warning-box {
+            border: 1px solid #f97316; /* Помаранчева рамка */
+            background-color: #fff7ed; /* Світло-помаранчевий фон */
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem; /* Менший розмір тексту */
+            color: #9a3412; /* Темно-помаранчевий текст */
+        }
+        /* Health Bar Styling */
+        .health-score-section {
+            padding: 1rem 0;
+            margin-top: 1.5rem;
+            border-top: 1px solid #e5e7eb; /* Роздільник зверху */
+        }
+        .health-bar-container {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            height: 20px; /* Slimmer bar */
+            background-color: #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        .health-bar-segment {
+            flex-grow: 1;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: white;
+            font-size: 0.75rem;
+            transition: background-color 0.3s;
+        }
+        .segment-A { background-color: #16a34a; }
+        .segment-B { background-color: #22c55e; }
+        .segment-C { background-color: #eab308; }
+        .segment-D { background-color: #f97316; }
+        .segment-E { background-color: #ef4444; }
+        .segment-F { background-color: #dc2626; }
+        .segment-G { background-color: #b91c1c; }
+
+        .health-indicator-circle {
+            position: absolute;
+            top: -12px; /* Position above the bar */
+            height: 24px;
+            width: 24px;
+            background-color: white;
+            border-radius: 50%;
+            border: 2px solid;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 0.875rem;
+            transform: translateX(-50%);
+            transition: left 0.5s ease-out;
+            z-index: 10; /* Ensure indicator is on top */
+        }
+
+        /* Nutrition Info Styling */
+        .nutrition-bar {
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            margin-top: 8px;
+            border-radius: 8px;
+            background-color: #f1f5f9;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .nutrition-item {
+            text-align: center;
+            font-size: 0.875rem;
+        }
+        .nutrition-value {
+            font-weight: bold;
+            color: #1e40af;
+            font-size: 1.25rem; /* Larger font size for values */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="bg-white shadow-md w-full">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <!-- SVG Icon for Fork and Knife -->
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+                <span class="text-xl font-bold text-gray-800">Recipe Finder AI</span>
+            </div>
+            <span class="text-sm text-gray-500 hidden sm:block">Знайди свій ідеальний рецепт</span>
+        </div>
+    </header>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-content">
+        <div class="container card p-8 my-8 w-full mx-4 sm:mx-0">
+            <h1 class="text-3xl font-bold text-center mb-6 recipe-title">Рецепти з того, що є</h1>
+
+            <!-- Input Section -->
+            <div class="space-y-4">
+                <div>
+                    <label for="text-input" class="block text-sm font-medium text-gray-700 mb-1">Або введіть інгредієнти:</label>
+                    <textarea id="text-input" class="w-full h-24 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Наприклад: курка, цибуля, морква, рис"></textarea>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex-1">
+                        <label for="file-input" class="block text-sm font-medium text-gray-700 mb-1">Завантажте фото продуктів:</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="file" id="file-input" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <button id="delete-image-btn" class="hidden px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400">
+                                Видалити
+                            </button>
+                        </div>
+                    </div>
+                    <button id="find-recipes-btn" class="btn px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-nowrap">Знайти рецепти</button>
+                </div>
+            </div>
+
+            <!-- Loading & Results Section -->
+            <div id="loading" class="hidden flex justify-center items-center my-8">
+                <div class="loader"></div>
+            </div>
+
+            <div id="results" class="mt-8 space-y-6">
+                <!-- Results will be displayed here -->
+            </div>
+
+            <p id="error-message" class="mt-4 text-red-500 text-center"></p>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-4 mt-auto">
+        <div class="container mx-auto px-4 text-center text-sm">
+            &copy; 2025 Recipe Finder AI. Усі права захищені.
+        </div>
+    </footer>
+
+    <script>
+        const apiKey = "AIzaSyDpm_vdSbZZ5SfPWhcNEtX2bpxv0xSUcoE";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+        const textInput = document.getElementById('text-input');
+        const fileInput = document.getElementById('file-input');
+        const findRecipesBtn = document.getElementById('find-recipes-btn');
+        const loadingDiv = document.getElementById('loading');
+        const resultsDiv = document.getElementById('results');
+        const errorMessage = document.getElementById('error-message');
+        const deleteImageBtn = document.getElementById('delete-image-btn');
+
+        // Show/hide delete button based on file input
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                deleteImageBtn.classList.remove('hidden');
+            } else {
+                deleteImageBtn.classList.add('hidden');
+            }
+        });
+
+        // Clear the file input when delete button is clicked
+        deleteImageBtn.addEventListener('click', () => {
+            fileInput.value = '';
+            deleteImageBtn.classList.add('hidden');
+        });
+
+        findRecipesBtn.addEventListener('click', async () => {
+            const text = textInput.value.trim();
+            const file = fileInput.files[0];
+
+            if (!text && !file) {
+                errorMessage.textContent = 'Будь ласка, введіть інгредієнти або завантажте зображення.';
+                return;
+            }
+
+            resultsDiv.innerHTML = '';
+            errorMessage.textContent = '';
+            loadingDiv.classList.remove('hidden');
+
+            try {
+                let payload;
+                // ОНОВЛЕНИЙ ПРОМПТ: Додано інструкцію для рамки пояснення
+                const promptTemplate = "Створіть 3 детальні рецепти, використовуючи надані інгредієнти. **Логічний ланцюг несумісності: ОБОВ'ЯЗКОВО перевірте сумісність продуктів харчування згідно з основними правилами роздільного харчування та уникайте несумісних поєднань (наприклад, білок + крохмаль, деякі фрукти).** ЯКЩО ви виявили, що інгредієнти дуже несумісні або неможливі для використання в одному блюді, почніть свою відповідь з пояснювального абзацу, укладеного в маркери `[WARNING_START]` та `[WARNING_END]`. Кожен рецепт повинен бути згенерований у вигляді **Спрощеного Універсального Промпта для Генерації Рецепту (УСР)**, використовуючи Markdown. ОБОВ'ЯЗКОВО починайте кожен рецепт з заголовка # Назва Рецепту. Блоки: Інгредієнти (з g/ml та prep notes), Інструкції Приготування та Додаткові Елементи (Харчова Цінність та Поради). Щоб забезпечити роботу інтерфейсу, **ПІСЛЯ** основного вмісту рецепту додайте два окремі рядки: 1. Корисність: [A-G] і 2. КЖВ: [Калорії] ккал / [Жири] г / [Вуглеводи] г. Розділяйте рецепти символами '###'.";
+
+                if (file) {
+                    const base64Data = await fileToBase64(file);
+                    const prompt = `Опишіть продукти на цьому зображенні. Потім ${promptTemplate}`;
+                    payload = {
+                        contents: [{
+                            parts: [
+                                { text: prompt },
+                                {
+                                    inlineData: {
+                                        mimeType: file.type,
+                                        data: base64Data
+                                    }
+                                }
+                            ]
+                        }]
+                    };
+                } else {
+                    const prompt = `${promptTemplate} Інгредієнти: ${text}`;
+                    payload = {
+                        contents: [{
+                            parts: [{ text: prompt }]
+                        }]
+                    };
+                }
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Помилка API: ${response.status} ${response.statusText} - ${errorText}`);
+                }
+
+                const result = await response.json();
+                const recipeText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (recipeText) {
+                    // Split the response into individual recipe blocks using '###' as the separator
+                    const recipeBlocks = recipeText.split('###').filter(r => r.trim() !== '');
+
+                    if (recipeBlocks.length > 0) {
+                        recipeBlocks.forEach(recipeBlock => {
+                            recipeBlock = recipeBlock.trim();
+                            if (!recipeBlock) return;
+                            
+                            // 0. Extract potential Warning/Explanation (Warning Box)
+                            const warningStart = recipeBlock.indexOf('[WARNING_START]');
+                            const warningEnd = recipeBlock.indexOf('[WARNING_END]');
+                            let warningText = '';
+
+                            if (warningStart !== -1 && warningEnd !== -1 && warningEnd > warningStart) {
+                                warningText = recipeBlock.substring(warningStart + '[WARNING_START]'.length, warningEnd).trim();
+                                // Remove warning markers from the main block
+                                // 's' flag for multi-line support
+                                recipeBlock = recipeBlock.replace(/\[WARNING_START\].*?\[WARNING_END\]/s, '').trim();
+                            }
+
+
+                            // 1. Extract Utility Grade (Корисність) - relies on the specific parsing line requested in the prompt
+                            const utilityMatch = recipeBlock.match(/Корисність:\s*([A-G])/);
+                            let utilityGrade = '';
+                            let contentWithoutGrade = recipeBlock;
+
+                            if (utilityMatch) {
+                                utilityGrade = utilityMatch[1];
+                                // Remove the utility line from the content
+                                contentWithoutGrade = recipeBlock.replace(utilityMatch[0], '').trim();
+                            }
+
+                            // 2. Extract Nutrition Info (КЖВ) - relies on the specific parsing line requested in the prompt
+                            const nutritionMatch = contentWithoutGrade.match(/КЖВ:\s*(\d+)\s*ккал\s*\/\s*(\d+)\s*г\s*\/\s*(\d+)\s*г/i);
+                            let nutritionInfo = null;
+                            let contentWithoutNutrition = contentWithoutGrade;
+
+                            if (nutritionMatch) {
+                                nutritionInfo = {
+                                    calories: nutritionMatch[1],
+                                    fats: nutritionMatch[2],
+                                    carbs: nutritionMatch[3],
+                                };
+                                // Remove the nutrition line from the content
+                                contentWithoutNutrition = contentWithoutGrade.replace(nutritionMatch[0], '').trim();
+                            }
+
+                            // 3. Extract Title (assume the first line is the title)
+                            const firstLineEnd = contentWithoutNutrition.indexOf('\n');
+                            let recipeTitle = 'Невідомий Рецепт';
+                            let formattedRecipeContent = contentWithoutNutrition;
+
+                            if (firstLineEnd !== -1) {
+                                recipeTitle = contentWithoutNutrition.substring(0, firstLineEnd).trim();
+                                formattedRecipeContent = contentWithoutNutrition.substring(firstLineEnd).trim();
+                            } else {
+                                recipeTitle = contentWithoutNutrition.substring(0, Math.min(contentWithoutNutrition.length, 30)) + '...';
+                                formattedRecipeContent = contentWithoutNutrition;
+                            }
+                            
+                            // Clean up markdown heading symbols from the title
+                            recipeTitle = recipeTitle.replace(/^#+\s*/, '').trim();
+
+                            // 4. Build the card
+                            const recipeCard = document.createElement('div');
+                            recipeCard.className = 'card p-6 recipe-card';
+                            
+                            // A. Render Warning Text (if present) - ПЕРШИЙ ЕЛЕМЕНТ
+                            if (warningText) {
+                                const warningDiv = document.createElement('div');
+                                warningDiv.className = 'warning-box';
+                                warningDiv.innerHTML = `<p class="font-semibold mb-2">Увага:</p><p>${warningText}</p>`;
+                                recipeCard.appendChild(warningDiv);
+                            }
+
+                            // B. Render Title (h3 - синій) and Markdown Content
+                            recipeCard.innerHTML += `<h3>${recipeTitle}</h3>` + formatMarkdownToHtml(formattedRecipeContent);
+
+                            // C. Render Nutrition Info (КЖВ)
+                            if (nutritionInfo) {
+                                // Nutrition Bar
+                                const nutritionBar = document.createElement('div');
+                                nutritionBar.className = 'nutrition-bar mt-4';
+                                nutritionBar.innerHTML = `
+                                    <div class="nutrition-item">Калорії:<br><span class="nutrition-value text-red-600">${nutritionInfo.calories} ккал</span></div>
+                                    <div class="nutrition-item">Жири:<br><span class="nutrition-value text-green-600">${nutritionInfo.fats} г</span></div>
+                                    <div class="nutrition-item">Вуглеводи:<br><span class="nutrition-value text-blue-600">${nutritionInfo.carbs} г</span></div>
+                                `;
+                                recipeCard.appendChild(nutritionBar);
+                            }
+                            
+                            // D. Render Health Bar (Корисність) - ОСТАННІЙ ЕЛЕМЕНТ
+                            if (utilityGrade) {
+                                // Health Bar Container
+                                const healthScoreSection = document.createElement('div');
+                                healthScoreSection.className = 'health-score-section';
+                                healthScoreSection.innerHTML = `
+                                    <div class="relative mb-6">
+                                        <div class="health-bar-container">
+                                            <div class="health-bar-segment segment-A"></div>
+                                            <div class="health-bar-segment segment-B"></div>
+                                            <div class="health-bar-segment segment-C"></div>
+                                            <div class="health-bar-segment segment-D"></div>
+                                            <div class="health-bar-segment segment-E"></div>
+                                            <div class="health-bar-segment segment-F"></div>
+                                            <div class="health-bar-segment segment-G"></div>
+                                        </div>
+                                        ${createIndicator(utilityGrade)}
+                                        <div class="flex justify-between mt-2 text-sm font-semibold text-gray-500">
+                                            <span>A</span>
+                                            <span>B</span>
+                                            <span>C</span>
+                                            <span>D</span>
+                                            <span>E</span>
+                                            <span>F</span>
+                                            <span>G</span>
+                                        </div>
+                                    </div>
+                                `;
+                                recipeCard.appendChild(healthScoreSection);
+                            }
+
+
+                            resultsDiv.appendChild(recipeCard);
+                        });
+                    } else {
+                        errorMessage.textContent = 'Не вдалося знайти рецепти. Спробуйте змінити інгредієнти.';
+                    }
+                } else {
+                    errorMessage.textContent = 'Не вдалося отримати рецепти. Будь ласка, спробуйте ще раз.';
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+                errorMessage.textContent = `Виникла помилка: ${error.message}. Перевірте введені дані та спробуйте ще раз. (Деталі: ${error.message})`;
+            } finally {
+                loadingDiv.classList.add('hidden');
+            }
+        });
+
+        function createIndicator(grade) {
+            const grades = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+            const index = grades.indexOf(grade);
+            if (index === -1) return '';
+            
+            // Calculate position for the center of the segment
+            const leftPosition = ((index * 2 + 1) / (grades.length * 2)) * 100;
+
+            const segmentColor = {
+                'A': '#16a34a', 'B': '#22c55e', 'C': '#eab308', 'D': '#f97316',
+                'E': '#ef4444', 'F': '#dc2626', 'G': '#b91c1c'
+            };
+            return `<div class="health-indicator-circle" style="left: ${leftPosition}%; border-color: ${segmentColor[grade]}; color: ${segmentColor[grade]};">${grade}</div>`;
+        }
+
+        // Helper function to convert a simple markdown string to HTML
+        function formatMarkdownToHtml(markdown) {
+            let html = markdown;
+            // Clean up titles that might start the block
+            html = html.replace(/^#+\s(.*?)$/gm, '<h3>$1</h3>');
+            
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            const lines = html.split('\n');
+            let formattedLines = [];
+            let inList = false;
+            let listType = '';
+
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+                const isListItem = trimmedLine.match(/^(\*|\d\.)\s/);
+
+                if (isListItem) {
+                    if (!inList) {
+                        listType = trimmedLine.startsWith('*') ? 'ul' : 'ol';
+                        formattedLines.push(`<${listType}>`);
+                        inList = true;
+                    }
+                    formattedLines.push(`<li>${trimmedLine.substring(isListItem[0].length)}</li>`);
+                } else {
+                    if (inList) {
+                        formattedLines.push(`</${listType}>`);
+                        inList = false;
+                    }
+                    if (trimmedLine) {
+                        // КОНТРОЛЬ: Пропустити рядки, які виглядають як таблиця Markdown
+                        if (trimmedLine.startsWith('|') && trimmedLine.lastIndexOf('|') > 0) {
+                            continue; // Повністю пропустити цей рядок
+                        }
+
+                        // Тільки заголовки (h3) та параграфи
+                        if (!trimmedLine.match(/^<h\d>.*<\/h\d>$/)) {
+                             formattedLines.push(`<p>${trimmedLine}</p>`);
+                        } else {
+                            formattedLines.push(trimmedLine);
+                        }
+                    }
+                }
+            }
+            if (inList) {
+                formattedLines.push(`</${listType}>`);
+            }
+            html = formattedLines.join('');
+            
+            // Fix issues where markdown parsing wraps headings in paragraph tags
+            html = html.replace(/<p><h3>/g, '<h3>').replace(/<\/h3><\/p>/g, '</h3>');
+            
+            return html;
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+    </script>
+</body>
+</html>
